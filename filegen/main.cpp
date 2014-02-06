@@ -4,28 +4,57 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
 using namespace std;
 
-int main()
+char initfile()
 {
-	ofstream myfile;
-	myfile.open("test");
+	ofstream myfile ("test");
 	if(myfile.is_open()){
-		myfile << "HIIIIIII\n";
+		myfile << " ";
 		myfile.close();
 	}else{
-		cout << "Error: Cannot open file";
+		cout << "cannot create file" << endl;
+		return 0;
 	}
+	return 1;
+
+}
+
+char addstr(string s)
+{
+	fstream myfile ("test");
+	if(myfile.is_open()){
+		myfile.seekg(0, ios::end);
+		myfile << s;
+		myfile.close();
+	}else{
+		cout << "Cannot open file" << endl;
+		return 0;
+	}
+
+	return 1;
+}
+
+int filesize()
+{
+	ifstream myfile ("test", ios::binary | ios::ate);
+	int size = (int) myfile.tellg();
+	myfile.close();
+
+	return size;
+}
+
+int main()
+{
+	initfile();
+	while(filesize() < 4194304){
+		addstr("HI! ");	
+	}
+
+	cout << filesize() << endl;
 
 	return 0;
 }
 
-int get_file_size(ofstream f)
-{
-	streampos begin, end;
-	f.seekg(0, )
-
-
-
-}
