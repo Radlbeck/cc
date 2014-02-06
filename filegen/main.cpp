@@ -22,12 +22,14 @@ char initfile()
 
 }
 
-char addstr(string s)
+char addstr(string s, int x)
 {
 	fstream myfile ("test");
+	myfile.seekg(0, ios::end);
 	if(myfile.is_open()){
-		myfile.seekg(0, ios::end);
-		myfile << s;
+		while( myfile.tellg() < x ){
+			myfile << s;
+		}
 		myfile.close();
 	}else{
 		cout << "Cannot open file" << endl;
@@ -48,10 +50,8 @@ int filesize()
 
 int main()
 {
-	initfile();
-	while(filesize() < 4194304){
-		addstr("HI! ");	
-	}
+	initfile();	
+	addstr("ddddddddddd", 4194304);
 
 	cout << filesize() << endl;
 
