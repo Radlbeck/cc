@@ -46,7 +46,7 @@ int filesize()
 int main()
 {
 	if(initfile())
-		addstr("ddddddddddd", 4194304);
+		addstr("U™U™U™U™U™U™U™U™U™U™U™", 4194304);
 
 	cout << filesize() << endl;
 
