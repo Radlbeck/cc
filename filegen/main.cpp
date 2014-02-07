@@ -2,6 +2,7 @@
 //
 #include <iostream>
 #include <fstream>
+//#include <sstream>
 #include <string>
 using namespace std;
 
@@ -9,7 +10,7 @@ char initfile()
 {
 	ofstream myfile ("test");
 	if(myfile.is_open()){
-		myfile << " ";
+		myfile << "";
 		myfile.close();
 	}else{
 		cout << "cannot create file" << endl;
@@ -45,8 +46,12 @@ int filesize()
 
 int main()
 {
+//	stringstream ss;
+//	ss << 0x55 << 0xAA;
+//	string s = ss.str();
+
 	if(initfile())
-		addstr("U™U™U™U™U™U™U™U™U™U™U™", 4194304);
+		addstr("U\252U\252",  4194304);
 
 	cout << filesize() << endl;
 
