@@ -1,11 +1,8 @@
 // Code for basic file manipulation
 //
-
-
 #include <iostream>
 #include <fstream>
 #include <string>
-
 using namespace std;
 
 char initfile()
@@ -19,23 +16,21 @@ char initfile()
 		return 0;
 	}
 	return 1;
-
 }
 
-char addstr(string s, int x)
+char addstr(string s, int size)
 {
 	fstream myfile ("test");
-	myfile.seekg(0, ios::end);
+	myfile.seekg(0, ios::end);		// sets the cursor to the eof
 	if(myfile.is_open()){
-		while( myfile.tellg() < x ){
+		while( myfile.tellg() < size ){	//.tellg() returns the amount of bytes from the cursor position
 			myfile << s;
 		}
 		myfile.close();
 	}else{
-		cout << "Cannot open file" << endl;
+		cout << "cannot open file" << endl;
 		return 0;
 	}
-
 	return 1;
 }
 
@@ -50,8 +45,8 @@ int filesize()
 
 int main()
 {
-	initfile();	
-	addstr("ddddddddddd", 4194304);
+	if(initfile())
+		addstr("ddddddddddd", 4194304);
 
 	cout << filesize() << endl;
 
