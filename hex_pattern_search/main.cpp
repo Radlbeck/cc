@@ -50,6 +50,8 @@ int main(int argc, char* argv[])
 		cout << "File cannot be opened" << endl;
 		return 1;
 	}
+	
+	//TODO add overall percentage count
 
 	cout << "count 0x55: "  << count_55    << endl;
 	cout << "count 0xaa: "  << count_aa    << endl;
