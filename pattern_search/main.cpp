@@ -1,5 +1,6 @@
 // Code for basic file search
 //
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,19 +8,31 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2){						// get file name
+	// get input file
+	if(argc != 2){	
 		cout << "No input file specified" << endl;
 		return 1;
 	}
 
 	//TODO parse file into hex (use hexdump?)
+	//system("hexdump -C" + argv[1] + "> dumped"); 
 
 
-	ifstream file (argv[1], ios::binary);			// print/search file contents
+	// print/search file contents
+	ifstream file (argv[1]);
 	string line;
+	string pat1 = "55";
+	string pat2 = "aa";
+
 	if(file.is_open()){
-		while(getline (file,line)){	//TODO find patters in 'line'
-			cout << line << endl;
+		while(getline (file,line)){
+			size_t found = line.find(pat1);
+			if(found != string::npos){
+				found = line.find(pat2);
+				if(found != string::npos){
+					cout << "found:" << line << endl;
+				}
+			}
 		}
 		file.close();
 	}else{
