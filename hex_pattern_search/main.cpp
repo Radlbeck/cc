@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 	int count_aa = 0;
 	int count_55 = 0;
 	int count_error = 0;
+	int count_word = 0;
 	bool was_aa  = 0;
 
 	pfile = fopen(argv[1], "r");
@@ -27,7 +28,9 @@ int main(int argc, char* argv[])
 	if(pfile != NULL){
 		while(current_bit != EOF){
 			current_bit = fgetc(pfile);
-			if(current_bit == EOF) break;
+			if(current_bit == EOF) break;			
+			count_word++;
+
 			if(current_bit == pattern_aa){
 				count_aa++;
 				was_aa = 1;
@@ -36,12 +39,10 @@ int main(int argc, char* argv[])
 				was_aa = 0;
 			}else{
 				int error_bit   = 0;
-
-				if(was_aa)				// therefore should be 0x55
+				if(was_aa)				// should be 0x55
 					error_bit = 0x55 ^ current_bit;
 				else					// should be 0xaa
 					error_bit = 0xaa ^ current_bit;
-
 				count_error += __builtin_popcount(error_bit);
 			}
 		}
@@ -51,12 +52,16 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	
-	//TODO add overall percentage count
-	//
+	// display metrics
+	float percent_error = ((count_error)*100) / (count_word * 8);
+
 
 	cout << "count 0x55: "  << count_55    << endl;
 	cout << "count 0xaa: "  << count_aa    << endl;
 	cout << "error count: " << count_error << endl;
+	cout << "error percentage: " << percent_error << " %" << endl;
+
+	//TODO Generate a new test file and do some more testing 
 
 	return 0;
 }
