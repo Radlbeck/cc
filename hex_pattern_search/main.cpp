@@ -25,10 +25,13 @@ int main(int argc, char* argv[])
 	if(pfile != NULL){
 		while(current_bit != EOF){
 			current_bit = fgetc(pfile);
-			if(current_bit == pattern_aa)
+			if(current_bit == pattern_aa){
 				count_aa++;
-			if(current_bit == pattern_55)
+			}else if(current_bit == pattern_55){
 				count_55++;
+			}else{
+				//TODO get char in hex and use bit wise to find the flipped bit count
+			}
 		}
 		fclose(pfile);
 	}else{
