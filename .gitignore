@@ -1,5 +1,5 @@
 filegen/out/*
-pattern_search/out/*
+string_pattern_search/out/*
 hex_pattern_search/out/*
 
 *.swp
