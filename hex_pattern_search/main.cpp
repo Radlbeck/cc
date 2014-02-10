@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 	}
 	
 	//TODO add overall percentage count
+	//
 
 	cout << "count 0x55: "  << count_55    << endl;
 	cout << "count 0xaa: "  << count_aa    << endl;
