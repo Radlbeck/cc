@@ -1,4 +1,6 @@
 This programs function is to search threw binary data and identify certain patterns in hex
 
+This example is more specific to find an error in a repeating pattern
+
 Applications:
 	- searching threw memory dumps for specific trigger values
