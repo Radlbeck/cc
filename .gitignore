@@ -1,5 +1,3 @@
-filegen/out/*
-string_pattern_search/out/*
-hex_pattern_search/out/*
+*/out/*
 
 *.swp
