@@ -1,1 +1,4 @@
 filegen/out/*
+pattern_search/out/*
+
+*.swp
