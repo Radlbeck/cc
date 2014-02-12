@@ -23,6 +23,7 @@ struct node{				// node data structure for DLL
 		while(file >> word){							// stream operator parses on white space (seperating words)
 			transform(word.begin(), word.end(), word.begin(), ::tolower);	// make sure all words are lower case
 			cout << word << endl;
+			//TODO sort the words (as chars), in order, into a dll
 		}
 		file.close();
 	}else{
@@ -30,6 +31,30 @@ struct node{				// node data structure for DLL
 		return 0;
 	}
 	return -1;
+}
+
+void printDLL_forward(node * head)
+{
+	node * current = head;
+	while(current != NULL ){		// rotate threw list untill end
+		cout << current->word << ", ";  // print out the current word
+		current = current->next;	// set the next node to be the current
+	}
+	cout << endl;
+}
+
+void printDLL_backward(node * head)
+{
+	node * current = head;
+	while(current->next != NULL){		// find the tail
+		current = current->next;
+	}
+
+	while(current != NULL){
+		cout << current->word << ", ";
+		current = current->prev;
+	}
+	cout << endl;
 }
 
 int main(int argc, char * argv[])
