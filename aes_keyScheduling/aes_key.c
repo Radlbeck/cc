@@ -104,6 +104,13 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
 	rkey[i] = (mkey[s+0] << 24) | (mkey[s+1] << 16) | (mkey[s+2] << 8) | (mkey[s+3]); 
     }
     /* put your code here */
+    UINT8 t = 0;
+    for (i = i; i < ((NW * NR) + 3); i++){
+	if(!(i % 4)){ // every 4 words generate t_i
+	    printf("t gen: %d \n", i);
+	}
+    }
+
     return;
 }
 
