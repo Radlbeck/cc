@@ -64,11 +64,21 @@ void printDLL_backward(node * head)
 		current = current->next;
 	}
 
-	while(current != NULL){
+	while(current->prev != NULL){
 		cout << current->word << ", ";
 		current = current->prev;
 	}
-	cout << endl;
+	cout << current->word << endl;
+}
+
+void remove2ndNode(node * head)
+{
+	node * current = head;
+
+	current = current->next;
+	current->next->prev = current->prev;
+	current->prev->next = current->next;
+	delete current;
 }
 
 int main(int argc, char * argv[])
@@ -81,13 +91,17 @@ int main(int argc, char * argv[])
 	node * head = getWords(argv[1]);
 	
 	cout << "Test 1: Words in order" << endl;
+	//TODO sort DLL!!!
 	printDLL_forward(head);
 
-//	cout << "Test 2: Words in reverse order" << endl;
-//
-//	cout << "Test 3: Remove the 2nd item" << endl;
-//
-//	cout << "Test 4: Words in order" << endl;
+	cout << "Test 2: Words in reverse order" << endl;
+	printDLL_backward(head);
+
+	cout << "Test 3: Remove the 2nd item" << endl;
+	remove2ndNode(head);
+
+	cout << "Test 4: Words in order" << endl;
+	printDLL_forward(head);
 
 	return 0;
 }
