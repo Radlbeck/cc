@@ -1,19 +1,13 @@
 /* This is a template file for the AES-128 key schedulng project. */
-/* This is how you put comments in C code.
- * The comments could be multiple lines.
- * */
-
-// Another way for comments. 
-// Start with two slashes until the end of the line 
-
+// Edited By: Andrew Radlbeck
 /* include header files */
 #include    <stdio.h>
 #include    <stdlib.h>
 
 /* This is how you can define a macro for constants */
-#define	    NW	4  // Number of 32-bit words in a block
+#define	    NW	4       // Number of 32-bit words in a block
 #define	    NB	(NW*4)  // Number of bytes in a block
-#define	    NR	10  // Number of rounds 
+#define	    NR	10  	// Number of rounds 
 
 // Number of words in round keys
 #define	    NW_ROUNDKEY	    (NW*(NR+1))
@@ -105,14 +99,24 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
     }
     /* put your code here */
     UINT32 t = 0;
-    for (i = i; i < ((NW * NR) + 3); i++){
-	if(!(i % 4)){ // every 4 words generate t_i
-		printf("Word_%d: %08X\n", (i-1), rkey[i-1]);
-		t = (rkey[i-1] << 8);
-		printf("Shift: %08X\n", t);
+    for (i = i; i < (NW_ROUNDKEY); i++){
+	if(!(i % NW)){ 						// every 4 words generate t_i
+		printf("Word_%d: %08X\n", (i-1), rkey[i-1]); //TODO REMOVE
+		// t = (rkey[i-1] << 8 |rkey[i-1] >> 24);		// Rotate right by 8-bits [NOT NESSISARY]
+		// 8-bit rotated SBOX sub given{a0,a1,a2,a3}
+		t = (aes_SBOX[((t >> 16) & 0x000000FF)] << 24) |	// a1
+		    (aes_SBOX[((t >> 8) & 0x000000FF)]  << 16) | 	// a2
+		    (aes_SBOX[(t & 0x000000FF)] << 8) 	       |	// a3
+		    aes_SBOX[(t >> 24)];				// a0
+
+		printf("SBOXED: %08X\n", t);		    //TODO REMOVE
+		//TODO XOR with RCON
+		t = t ^ RCon[i/NW];
+		rkey[i] = t ^ rkey[i - NW];
+	}else{
+		rkey[i] = rkey[i - 1] ^ rkey[i - NW];
 	}
     }
-
     return;
 }
 
