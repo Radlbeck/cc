@@ -101,7 +101,7 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
     UINT32 t = 0;
     for (i = i; i < (NW_ROUNDKEY); i++){
 	if(!(i % NW)){ 						// every 4 words generate t_i
-		printf("Word_%d: %08X\n", (i-1), rkey[i-1]); //TODO REMOVE
+//		printf("Word_%d: %08X\n", (i-1), rkey[i-1]); //TODO REMOVE
 		// t = (rkey[i-1] << 8 |rkey[i-1] >> 24);		// Rotate right by 8-bits [NOT NESSISARY]
 		// 8-bit rotated SBOX sub given{a0,a1,a2,a3}
 		t = (aes_SBOX[((t >> 16) & 0x000000FF)] << 24) |	// a1
@@ -109,7 +109,7 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
 		    (aes_SBOX[(t & 0x000000FF)] << 8) 	       |	// a3
 		    aes_SBOX[(t >> 24)];				// a0
 
-		printf("SBOXED: %08X\n", t);		    //TODO REMOVE
+//		printf("SBOXED: %08X\n", t);		    //TODO REMOVE
 		//TODO XOR with RCON
 		t = t ^ RCon[i/NW];
 		rkey[i] = t ^ rkey[i - NW];
@@ -118,6 +118,41 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
 	}
     }
     return;
+}
+
+#define BUFFER_SIZE 100
+// returns true given user input was recived correctly
+char get_user_key(UINT8 *mkey)
+{
+	printf("Please enter a key: ");
+	
+	UINT8 temp_mkey[NB];
+	char in[BUFFER_SIZE];	// assuming the user doesn't go crazy with white space
+	char twos[2];		// temperarily store 8-bit hex word
+	int twos_count = 0;
+	int key_count = 0;	
+	fgets(in, 100, stdin);
+
+	int i = 0;		
+	for(i = 0; i < BUFFER_SIZE; i++){              // rotate threw input
+		if(!isspace(in[i])){		       // ignore whitespace
+			twos[twos_count] = in[i];      // assuming all entries are valid hex numbers
+			if(twos_count >= 1){	       // once a pair has been found convert to UINT8
+				temp_mkey[key_count] = (UINT8) strtol(twos, NULL, 16);
+				if(key_count >= NB){   // upon first valid 32 8-bit words exit
+					for(i = 0; i < NB; i++)	// copy temp into the real key
+						mkey[i] = temp_mkey[i];
+				       	return 1;
+				}
+				key_count++;
+				twos_count = 0;
+			}else{
+				twos_count++;
+			}
+		}
+	}
+	
+	return 0;
 }
 
 /* Define buffers for the keys.
@@ -131,6 +166,8 @@ static UINT32	round_keys[NW_ROUNDKEY];
 
 int main (int argc, char **argv) 
 {
+    if(!get_user_key(maskter_key)) printf("Error reading entery.... using default key");
+  
     printf("The master key is:\n");
     print_char(maskter_key, NB);
 
