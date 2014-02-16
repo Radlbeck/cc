@@ -31,12 +31,12 @@ node * getWords(char * infile)
 			current = new node;			// allocate memory for the node
 
 			strcpy(current->word, word.c_str());	// copy the lower case word into the node
+			if(head == NULL) head = current;	// set head node pointer
 			if(prev != NULL){
 			       	prev->next = current;		// set next, prev pointers
 				current->prev = prev;
 			}
 
-			if(head == NULL) head = current;	// set head node pointer
 			prev = current;				// remember the last node
 		}
 		file.close();
@@ -64,7 +64,7 @@ void printDLL_backward(node * head)
 		current = current->next;
 	}
 
-	while(current->prev != NULL){
+	while(current->prev != NULL){		// reversed print forward
 		cout << current->word << ", ";
 		current = current->prev;
 	}
@@ -76,9 +76,9 @@ void remove2ndNode(node * head)
 	node * current = head;
 
 	current = current->next;
-	current->next->prev = current->prev;
+	current->next->prev = current->prev;	// create the link around the deleted node
 	current->prev->next = current->next;
-	delete current;
+	delete current;				// deallocate memory for node
 }
 
 int main(int argc, char * argv[])
@@ -91,7 +91,7 @@ int main(int argc, char * argv[])
 	node * head = getWords(argv[1]);
 	
 	cout << "Test 1: Words in order" << endl;
-	//TODO sort DLL!!!
+	//TODO sort DLL!!! Do we want to sort in getWords???
 	printDLL_forward(head);
 
 	cout << "Test 2: Words in reverse order" << endl;
