@@ -101,14 +101,14 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
     UINT32 t = 0;
     for (i = i; i < (NW_ROUNDKEY); i++){
 	if(!(i % NW)){ 							// every 4 words generate t_i
-		// t = (rkey[i-1] << 8 |rkey[i-1] >> 24);		// Rotate right by 8-bits [NOT NESSISARY]
+		 t = rkey[i-1];
 		// 8-bit rotated SBOX sub given{a0,a1,a2,a3}
 		t = (aes_SBOX[((t >> 16) & 0x000000FF)] << 24) |	// a1
 		    (aes_SBOX[((t >> 8) & 0x000000FF)]  << 16) | 	// a2
 		    (aes_SBOX[(t & 0x000000FF)] << 8) 	       |	// a3
 		    aes_SBOX[(t >> 24)];				// a0
-
-		t = t ^ RCon[i/NW];
+		
+		t = t ^ (RCon[(i/NW) - 1] << 24);
 		rkey[i] = t ^ rkey[i - NW];
 	}else{
 		rkey[i] = rkey[i - 1] ^ rkey[i - NW];
