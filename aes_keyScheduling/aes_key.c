@@ -1,4 +1,4 @@
-/* This is a template file for the AES-128 key schedulng project. */
+/* This is a template file for the AES-128 key scheduling project. */
 // Edited By: Andrew Radlbeck
 /* include header files */
 #include    <stdio.h>
@@ -102,7 +102,7 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
     for (i = i; i < (NW_ROUNDKEY); i++){
 	if(!(i % NW)){ 							// every 4 words generate t_i
 		 t = rkey[i-1];
-		// 8-bit rotated SBOX sub given{a0,a1,a2,a3}
+		// 8-bit rotated SBOX sub given {a0,a1,a2,a3}
 		t = (aes_SBOX[((t >> 16) & 0x000000FF)] << 24) |	// a1
 		    (aes_SBOX[((t >> 8) & 0x000000FF)]  << 16) | 	// a2
 		    (aes_SBOX[(t & 0x000000FF)] << 8) 	       |	// a3
@@ -118,7 +118,7 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
 }
 
 #define BUFFER_SIZE 100
-// returns true given user input was received correctly
+// returns true and copys key given user input was received correctly
 int get_user_key(UINT8 *mkey)
 {
 	printf("Please enter a key: ");
@@ -164,7 +164,7 @@ static UINT32	round_keys[NW_ROUNDKEY];
 
 int main (int argc, char **argv) 
 {
-    if(!get_user_key(maskter_key)) printf("Error reading entry.... using default key\n");
+    if(!get_user_key(maskter_key)) return -1; // printf("Error reading entry.... using default key\n"); Could continue if desired 
   
     printf("The master key is:\n");
     print_char(maskter_key, NB);
