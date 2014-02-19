@@ -16,37 +16,6 @@ struct node{				// node data structure for DLL
 	node * prev;
 };
 
-node * getWords(char * infile)
-{
-	node * head = NULL; 
-	node * prev = NULL;
-
-	ifstream file (infile);								// open file into an input file stream
-	if(file.is_open()){
-		string word;
-		while(file >> word){							// stream operator parses on white space (seperating words)
-			transform(word.begin(), word.end(), word.begin(), ::tolower);	// make sure all words are lower case
-
-			node * current;				// create a new node pointer
-			current = new node;			// allocate memory for the node
-
-			strcpy(current->word, word.c_str());	// copy the lower case word into the node
-			if(head == NULL) head = current;	// set head node pointer
-			if(prev != NULL){
-			       	prev->next = current;		// set next, prev pointers
-				current->prev = prev;
-			}
-
-			prev = current;				// remember the last node
-		}
-		file.close();
-	}else{
-		cout << ERROR << "cannot open file" << endl;
-		return NULL;
-	}
-	return head;
-}
-
 void printDLL_forward(node * head)
 {
 	node * current = head;
@@ -56,6 +25,68 @@ void printDLL_forward(node * head)
 	}
 	cout << current->word << endl;
 }
+
+node * getWords(char * infile)
+{
+	node * head = NULL; 
+	node * prev = NULL;
+
+	ifstream file (infile);								// open file into an input file stream
+	if(file.is_open()){
+		string word;
+		while(file >> word){							// stream operator parses on white space (seperating words)
+//			cout << "on word: " << word << endl;//TODO REMOVE
+			transform(word.begin(), word.end(), word.begin(), ::tolower);	// make sure all words are lower case
+
+			node * current = new node;		// create a new node pointer & allocate memory
+			node * find = head;
+			char dbreak = 0;			// flag to help skip word
+
+			strcpy(current->word, word.c_str());	// copy the lower case word into the node
+
+			while(find != NULL){
+				if((string)find->word < (string)current->word){
+//					cout << "\t" << find->word << " < " << current->word << endl; //TODO REMOVE
+					prev = find;
+					find = find->next;
+				}else if((string)find->word == (string)current->word){
+					dbreak = 1;
+					delete current;
+					break;
+				}else{
+					break;
+				}
+			}
+
+			if(dbreak) continue;
+			if(prev != NULL){
+			       	prev->next    = current;		// set next, prev pointers
+				current->prev = prev;
+
+				current->next = find;
+				find->prev    = current;
+//				cout << "\t\t\t" << "link" << endl;	//TODO REMOVE
+			}else{
+				if(head == NULL){
+				       	head = current;
+//					cout << "\t\t\t" << "head" << endl;	//TODO REMOVE
+				}else{
+					current->next = head;
+					head = current;
+//					cout << "\t\t\t" << "p head" << endl; 	//TODO REMOVE
+				}
+			}
+//			printDLL_forward(head);	//TODO REMOVE
+
+		}
+		file.close();
+	}else{
+		cout << ERROR << "cannot open file" << endl;
+		return NULL;
+	}
+	return head;
+}
+
 
 void printDLL_backward(node * head)
 {
@@ -91,12 +122,11 @@ int main(int argc, char * argv[])
 	node * head = getWords(argv[1]);
 	
 	cout << "Test 1: Words in order" << endl;
-	//TODO sort DLL!!! Do we want to sort in getWords???
 	printDLL_forward(head);
 
 	cout << "Test 2: Words in reverse order" << endl;
 	printDLL_backward(head);
-
+	
 	cout << "Test 3: Remove the 2nd item" << endl;
 	remove2ndNode(head);
 
