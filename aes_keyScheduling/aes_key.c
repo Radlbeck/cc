@@ -14,7 +14,7 @@
 
 /* define new data types */
 typedef	unsigned char  UINT8;
-typedef	unsigned int  UINT32;
+typedef	unsigned int   UINT32;
 
 /** A function that prints a section of memory.
  *
@@ -99,7 +99,7 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
     }
     /* put your code here */
     UINT32 t = 0;
-    for (i = i; i < (NW_ROUNDKEY); i++){
+    for (i = i; i < (NW_ROUNDKEY); i++){				// loop threw all the words
 	if(!(i % NW)){ 							// every 4 words generate t_i
 		 t = rkey[i-1];
 		// 8-bit rotated SBOX sub given {a0,a1,a2,a3}
@@ -108,10 +108,10 @@ void	aes128_encrypt_key_scheduling (UINT8 *mkey, UINT32 *rkey)
 		    (aes_SBOX[(t & 0x000000FF)] << 8) 	       |	// a3
 		    aes_SBOX[(t >> 24)];				// a0
 		
-		t = t ^ (RCon[(i/NW) - 1] << 24);
-		rkey[i] = t ^ rkey[i - NW];
+		t = t ^ (RCon[(i/NW) - 1] << 24);			// XOR with the RCon array who stores only the high bits (<< 24)
+		rkey[i] = t ^ rkey[i - NW];				// XOR with the first word in the last round
 	}else{
-		rkey[i] = rkey[i - 1] ^ rkey[i - NW];
+		rkey[i] = rkey[i - 1] ^ rkey[i - NW];			// Everyother word, simply XOR with its previous round version
 	}
     }
     return;
@@ -128,7 +128,7 @@ int get_user_key(UINT8 *mkey)
 	char twos[2];		// temporarily store 8-bit hex word
 	int twos_count = 0;
 	int key_count = 0;	
-	fgets(in, 100, stdin);
+	fgets(in, BUFFER_SIZE, stdin);
 
 	int i = 0;		
 	for(i = 0; i < BUFFER_SIZE; i++){              // rotate threw input
@@ -164,7 +164,10 @@ static UINT32	round_keys[NW_ROUNDKEY];
 
 int main (int argc, char **argv) 
 {
-    if(!get_user_key(maskter_key)) return -1; // printf("Error reading entry.... using default key\n"); Could continue if desired 
+    if(!get_user_key(maskter_key)){	 // printf("Error reading entry.... using default key\n"); Could continue if desired 
+	printf("Error: Not a valid input\n");
+        return -1;
+    }
   
     printf("The master key is:\n");
     print_char(maskter_key, NB);
