@@ -35,7 +35,7 @@ node * getWords(char * infile)
 	if(file.is_open()){
 		string word;
 		while(file >> word){							// stream operator parses on white space (seperating words)
-//			cout << "on word: " << word << endl;//TODO REMOVE
+			cout << "on word: " << word << endl;//TODO REMOVE
 			transform(word.begin(), word.end(), word.begin(), ::tolower);	// make sure all words are lower case
 
 			node * current = new node;		// create a new node pointer & allocate memory
@@ -46,7 +46,7 @@ node * getWords(char * infile)
 
 			while(find != NULL){
 				if((string)find->word < (string)current->word){
-//					cout << "\t" << find->word << " < " << current->word << endl; //TODO REMOVE
+					cout << "\t" << find->word << " < " << current->word << endl; //TODO REMOVE
 					prev = find;
 					find = find->next;
 				}else if((string)find->word == (string)current->word){
@@ -65,18 +65,22 @@ node * getWords(char * infile)
 
 				current->next = find;
 				find->prev    = current;
-//				cout << "\t\t\t" << "link" << endl;	//TODO REMOVE
+				cout << "\t\t\t" << "link" << endl;	//TODO REMOVE
 			}else{
 				if(head == NULL){
 				       	head = current;
-//					cout << "\t\t\t" << "head" << endl;	//TODO REMOVE
+					cout << "\t\t\t" << "head" << endl;	//TODO REMOVE
 				}else{
 					current->next = head;
+					head->prev = current;
 					head = current;
-//					cout << "\t\t\t" << "p head" << endl; 	//TODO REMOVE
+
+
+
+					cout << "\t\t\t" << "p head" << endl; 	//TODO REMOVE
 				}
 			}
-//			printDLL_forward(head);	//TODO REMOVE
+			printDLL_forward(head);	//TODO REMOVE
 
 		}
 		file.close();
@@ -124,15 +128,15 @@ int main(int argc, char * argv[])
 	cout << "Test 1: Words in order" << endl;
 	printDLL_forward(head);
 
-	cout << "Test 2: Words in reverse order" << endl;
+	cout << endl << "Test 2: Words in reverse order" << endl;
 	printDLL_backward(head);
 	
-	cout << "Test 3: Remove the 2nd item" << endl;
+/*	cout << endl << "Test 3: Remove the 2nd item" << endl;
 	remove2ndNode(head);
 
-	cout << "Test 4: Words in order" << endl;
+	cout <<"Test 4: Words in order" << endl;
 	printDLL_forward(head);
-
+*/
 	return 0;
 }
 
