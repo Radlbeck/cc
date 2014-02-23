@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 		token = strtok_r(str, "|", &saveptr);		// get pointer for next token
 		if(token == NULL) break;		
 
-		//TODO optimize - consider only moving pointers instead of allocation more memory
+		//TODO optimize - consider only moving pointers instead of allocating more memory
 		int j, k;
 		int len = strlen(token);
 		char *token_trim = new char;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// save comands into an array
+		// save commands into an array
 		if(i <= MAX_CMDS){
 			cmds[(i - 1)] = token_trim;			
 		}else{
