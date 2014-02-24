@@ -6,7 +6,7 @@
  *
  * TODO:
  *			-- change errors to redirect to stderr
- *			
+ *			-- close all pipe ends that are not being used in the current process
  *
  */
 #include <cstdio>
@@ -74,17 +74,20 @@ int main(int argc, char *argv[])
 		if(cid1 == 0){
 			child_last(cmds[1], pipefd_b, pipefd);
 		}else{
+
 			close(pipefd_b[1]);	 		// close write end
 			close(pipefd[0]);
-			close(pipefd[1]);
-			waitpid(cid1, 0, 0);
+			close(pipefd[1]);			
 			char buf;	// reads bit-by-bit from pipe to stdout
 
-			while(read(pipefd_b[0], &buf, 1)){
-				write(1, &buf, 1);
+			while(read(pipefd_b[0], &buf, 1)){				
+				write(1, &buf, 1);				
 			}printf("\n");	
-
+			//kill(cid1, SIGINT); //TODO need to return the signal back to the child process somehow
+			wait(NULL);
+			//waitpid(cid1, 0, 0);	
 			close(pipefd_b[0]);		// close pipe
+			
 		}				
 	}
 
@@ -104,7 +107,8 @@ int child_last(char *cmd[], int next_pipe[], int prev_pipe[]){
 	close(prev_pipe[1]);
 	close(next_pipe[0]);
 	dup2(prev_pipe[0], 0);		// copys pipes read end into stdin [pipe < stdin]
-	dup2(next_pipe[1], 1);		// copys pipes write end into stdout [stdout > pipe]
+	dup2(next_pipe[1], 1);		// copys pipes write end into stdout [stdout > pipe]	
+	dup2(next_pipe[0], 0);		// copys pipes write end into stdout [stdout > pipe]
 
 	execvp(cmd[0], cmd);								// replace child with cmd		//TODO this needs to be execvp
 	printf("Error: failed to launch %s\n", cmd[0]);	// if failed the code will continue
