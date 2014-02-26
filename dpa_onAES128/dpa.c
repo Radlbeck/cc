@@ -305,6 +305,17 @@ int	dpa_aes(int bytenum)
 	}
 
 	// Put your code here
+	
+	// rotate threw key guess NUM_KEYS >>> only one byte at a time? 
+		// look at bit bytenum refering to 10th round key byte (0 -> 15)
+		//rotate through power traces
+			// Cyper_i reg -> XOR key guess -> shift rows -> inv SBox -> get state_i reg
+			// compair state_i reg and cyper_i reg LSB if a change existes P_i -> S1 otherwise S0
+		// average S0 and S1 and avg_S0 - avg_S1
+		// store diff accosiated to i
+	// get the max of all stored differrences and return accosiated i(key value)
+	
+	
 
 	return kv;
 }

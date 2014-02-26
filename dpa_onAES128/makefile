@@ -7,7 +7,7 @@ CC = gcc
 CFLAGS = -O3
 
 # Target program to build
-TARGET = dpa_tpl
+TARGET = dpa
 T_TYPE = c
 
 # Output location
