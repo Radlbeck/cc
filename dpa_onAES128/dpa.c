@@ -278,15 +278,33 @@ double max_dp (double *p, int n, int *idx)
     return max;
 }
 
+int max_iv (int *p, int n, int *idx)
+{
+    int max = *p ++;
+    int	 ri = 0;
+    int	 i;
+
+    for (i = 1; i < n; i ++) { 
+	int t = *p ++;
+	if (t > max) {
+	    max = t;
+	    ri = i;
+        }
+    }
+    if (idx)
+    	*idx = ri;
+    return max;
+}
+
 /** Get the difference of a cipher text byte and the S_box input at the same location. 
  */
 int	get_difference(unsigned char * cipher, int n, int key) 
 {
-	static unsigned char shift_row[16] = {0,5,10,15,4,9,14,3,8,13,2,7,12,1,6,11}; // why do i need this ??
+	static unsigned char shift_row[16] = {0,5,10,15,4,9,14,3,8,13,2,7,12,1,6,11};
 	/* put your code here */
 	int temp = key ^ cipher[n];
 	temp = inv_S[temp];
-	return (cipher[n] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
+	return (cipher[shift_row[n]] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
 }
 
 // return the key byte at location bytenum
@@ -308,7 +326,8 @@ int	dpa_aes(int bytenum)
 	// Put your code here
 	int count_S0, count_S1, j;
 	
-	// rotate threw key guess NUM_KEYS >>> only one byte at a time? 
+	// rotate threw key guess NUM_KEYS >>> only one byte at a time? [i]
+	for(i = 0; i < NUM_KEYS; i++){
 		// look at bit bytenum refering to 10th round key byte (0 -> 15)
 		//rotate through power traces
 		for(j = 0; j < NUM_PTS; j++){
@@ -316,22 +335,23 @@ int	dpa_aes(int bytenum)
 			// compair state_i reg and cyper_i reg LSB if a change existes P_i -> S1 otherwise S0
 			if(get_difference(cipher[j], bytenum, i)){
 				count_S1++;
-		//		S1 = pts[j]; // where pts[number of traces][number of points]
+ 				PT_add(NULL, &pts1[i][0][0], &pts[j][0], PT_LENGTH);
+ 				printf("%d = %d\n", pts1[i][0][0], pts[j][0]); 				
 			}else{
 				count_S0++;
-		//		S0 = pts[j];
-			}
+ 				PT_add(NULL, &pts0[i][0][0], &pts[j][0], PT_LENGTH); 				
+			}			
 		}
-		// average S0 and S1 and avg_S0 - avg_S1
-		for(j = 0; j < count_S0; j++){
-			double avg_S0[PT_LENGTH];
-//	       		PT_add(&avg_S0, &avg_S0, &S0,PT_LENGTH);
-		}
-		//PT_div// devide???
+		// PT_div// divide??? AVG
+		PT_scale(NULL, &pts0[i][0][0], (1 / count_S0), PT_LENGTH);
+		PT_scale(NULL, &pts1[i][0][0], (1 / count_S1), PT_LENGTH);
+		// find difference abs(S0 - S1)
 		// store diff accosiated to i
+		PT_diff(&pt_delta[i][0], &pts0[i][0][0], &pts1[i][0][0], PT_LENGTH);
+		pt_delta_max[i] = max_dp(&pt_delta[i][0], PT_LENGTH, &pt_delta_max_idx[i]);
+	}
+	max_dp(&pt_delta_max[0], NUM_KEYS, &kv);
 	// get the max of all stored differrences and return accosiated i(key value)
-	
-	
 
 	return kv;
 }
