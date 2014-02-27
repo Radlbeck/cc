@@ -282,10 +282,11 @@ double max_dp (double *p, int n, int *idx)
  */
 int	get_difference(unsigned char * cipher, int n, int key) 
 {
-	static  unsigned char shift_row[16] = {0,5,10,15,4,9,14,3,8,13,2,7,12,1,6,11};
+	static unsigned char shift_row[16] = {0,5,10,15,4,9,14,3,8,13,2,7,12,1,6,11}; // why do i need this ??
 	/* put your code here */
-
-	// the last statement should be return
+	int temp = key ^ cipher[n];
+	temp = inv_S[temp];
+	return (cipher[n] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
 }
 
 // return the key byte at location bytenum
@@ -305,13 +306,28 @@ int	dpa_aes(int bytenum)
 	}
 
 	// Put your code here
+	int count_S0, count_S1, j;
 	
 	// rotate threw key guess NUM_KEYS >>> only one byte at a time? 
 		// look at bit bytenum refering to 10th round key byte (0 -> 15)
 		//rotate through power traces
+		for(j = 0; j < NUM_PTS; j++){
 			// Cyper_i reg -> XOR key guess -> shift rows -> inv SBox -> get state_i reg
 			// compair state_i reg and cyper_i reg LSB if a change existes P_i -> S1 otherwise S0
+			if(get_difference(cipher[j], bytenum, i)){
+				count_S1++;
+		//		S1 = pts[j]; // where pts[number of traces][number of points]
+			}else{
+				count_S0++;
+		//		S0 = pts[j];
+			}
+		}
 		// average S0 and S1 and avg_S0 - avg_S1
+		for(j = 0; j < count_S0; j++){
+			double avg_S0[PT_LENGTH];
+//	       		PT_add(&avg_S0, &avg_S0, &S0,PT_LENGTH);
+		}
+		//PT_div// devide???
 		// store diff accosiated to i
 	// get the max of all stored differrences and return accosiated i(key value)
 	
