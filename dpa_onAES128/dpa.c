@@ -304,7 +304,11 @@ int	get_difference(unsigned char * cipher, int n, int key)
 	/* put your code here */
 	int temp = key ^ cipher[n];
 	temp = inv_S[temp];
+	/*int ttemp = (cipher[shift_row[n]] % 2) ^ (temp % 2);  //TODO REMOVE
+	printf("n: %0x, cipher: %0x, key: %0x, temp: %0x, c_shift: %0x, ttemp: %0x\n",n,  cipher[n], key, temp, cipher[shift_row[n]], ttemp);
+	return ttemp;*/
 	return (cipher[shift_row[n]] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
+	//return (cipher[n] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
 }
 
 // return the key byte at location bytenum
@@ -336,22 +340,40 @@ int	dpa_aes(int bytenum)
 			if(get_difference(cipher[j], bytenum, i)){
 				count_S1++;
  				PT_add(NULL, &pts1[i][0][0], &pts[j][0], PT_LENGTH);
- 				printf("%d = %d\n", pts1[i][0][0], pts[j][0]); 				
+ 				//printf("%f += %f\n", pts1[i][0][0], pts[j][0]); 	//TODO REMPVE
 			}else{
 				count_S0++;
  				PT_add(NULL, &pts0[i][0][0], &pts[j][0], PT_LENGTH); 				
 			}			
 		}
 		// PT_div// divide??? AVG
-		PT_scale(NULL, &pts0[i][0][0], (1 / count_S0), PT_LENGTH);
-		PT_scale(NULL, &pts1[i][0][0], (1 / count_S1), PT_LENGTH);
+		//printf("%d\n", i); //TODO REMOVE
+ 		//printf("S0_c: %d, S1_c: %d \n", count_S0, count_S1); 	//TODO REMOVE
+ 		//printf("S0: %f, S1: %f \n", pts0[i][0][0], pts1[i][0][0]); 	//TODO REMOVE
+
+		double scale_0 = pow(count_S0, -1);
+		double scale_1 = pow(count_S1, -1);
+
+ 		//printf("S0_i: %f, S1_i: %f \n", scale_0, scale_1); 	//TODO REMOVE
+
+		PT_scale(NULL, &pts0[i][0][0], scale_0, PT_LENGTH);
+		PT_scale(NULL, &pts1[i][0][0], scale_1, PT_LENGTH);
+
 		// find difference abs(S0 - S1)
 		// store diff accosiated to i
+ 		//printf("S0: %f, S1: %f \n", pts0[i][0][0], pts1[i][0][0]); 	//TODO REMOVE works?
+
 		PT_diff(&pt_delta[i][0], &pts0[i][0][0], &pts1[i][0][0], PT_LENGTH);
+
+		//printf("delta: %f\n", pt_delta[i][0]); //TODO REMOVE
 		pt_delta_max[i] = max_dp(&pt_delta[i][0], PT_LENGTH, &pt_delta_max_idx[i]);
+		//printf("delta_max: %f\n", pt_delta_max[i]); //TODO REMOVE
+
+		// reset counters
+		count_S0 = count_S1 = 0;
 	}
-	max_dp(&pt_delta_max[0], NUM_KEYS, &kv);
 	// get the max of all stored differrences and return accosiated i(key value)
+	max_dp(&pt_delta_max[0], NUM_KEYS, &kv);
 
 	return kv;
 }
@@ -371,6 +393,7 @@ int	main (int argc, char ** argv)
 		end = atoi(argv[2]);;
 		break;
     }
+    
     start &= 0xF;
     end &= 0xF;
 
