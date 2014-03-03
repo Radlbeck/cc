@@ -308,7 +308,6 @@ int	get_difference(unsigned char * cipher, int n, int key)
 	printf("n: %0x, cipher: %0x, key: %0x, temp: %0x, c_shift: %0x, ttemp: %0x\n",n,  cipher[n], key, temp, cipher[shift_row[n]], ttemp);
 	return ttemp;*/
 	return (cipher[shift_row[n]] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
-	//return (cipher[n] % 2) ^ (temp % 2); // Compair LSBs of cipher and state key
 }
 
 // return the key byte at location bytenum
