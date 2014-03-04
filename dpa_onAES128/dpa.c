@@ -350,8 +350,8 @@ int	dpa_aes(int bytenum)
  		//printf("S0_c: %d, S1_c: %d \n", count_S0, count_S1); 	//TODO REMOVE
  		//printf("S0: %f, S1: %f \n", pts0[i][0][0], pts1[i][0][0]); 	//TODO REMOVE
 
-		double scale_0 = pow(count_S0, -1);
-		double scale_1 = pow(count_S1, -1);
+		double scale_0 = (1.0 / count_S0);
+		double scale_1 = (1.0 / count_S1);
 
  		//printf("S0_i: %f, S1_i: %f \n", scale_0, scale_1); 	//TODO REMOVE
 
