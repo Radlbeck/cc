@@ -66,10 +66,10 @@ static void	print_char (unsigned char *p, int n);
 int main (int argc, char **argv) 
 {
 	//TODO - make this user changeable
-	round_keys[NW_ROUNDKEY - 1] = 0x539FB188;
-	round_keys[NW_ROUNDKEY - 2] = 0x407E2B3F;
-	round_keys[NW_ROUNDKEY - 3] = 0x2D5A245F;
-	round_keys[NW_ROUNDKEY - 4] = 0x50FEBEE1;
+	round_keys[NW_ROUNDKEY - 4] = 0x539FB188;
+	round_keys[NW_ROUNDKEY - 3] = 0x407E2B3F;
+	round_keys[NW_ROUNDKEY - 2] = 0x2D5A245F;
+	round_keys[NW_ROUNDKEY - 1] = 0x50FEBEE1;
 
 	// reverse the key expansion process
 	decrypt_key_scheduling(master_key, round_keys);
