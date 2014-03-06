@@ -66,11 +66,10 @@ static void	print_char (unsigned char *p, int n);
 int main (int argc, char **argv) 
 {
 	//TODO - make this user changeable
-	// temp 10th round key - the master_key should be all f's
-	round_keys[NW_ROUNDKEY - 1] = 0x8CD7C326;
-	round_keys[NW_ROUNDKEY - 2] = 0x82D2D785;
-	round_keys[NW_ROUNDKEY - 3] = 0xE472F07B;
-	round_keys[NW_ROUNDKEY - 4] = 0xD60A3588;
+	round_keys[NW_ROUNDKEY - 1] = 0x539FB188;
+	round_keys[NW_ROUNDKEY - 2] = 0x407E2B3F;
+	round_keys[NW_ROUNDKEY - 3] = 0x2D5A245F;
+	round_keys[NW_ROUNDKEY - 4] = 0x50FEBEE1;
 
 	// reverse the key expansion process
 	decrypt_key_scheduling(master_key, round_keys);
@@ -105,29 +104,9 @@ void decrypt_key_scheduling(UINT32 *mkey, UINT32 *rkey)
 
 	for(i = 0; i < NW; i++){		// move the first round words of the round keys back to the master key
 		mkey[i] = rkey[i];
-		printf("%0x\n", mkey[i]);
+		printf("%08x\n", mkey[i]);
 	}
 
 	return;
 }
 
-/** A function that prints a section of memory.
- *
- *  You can change the width (w), which decides how many bytes you want to put on each line.
- */
-static void	print_char (unsigned char *p, int n)
-{
-	const	int	w = 16;
-	int	i = 0;
-
-	while (i < n) {
-	    int	j;
-	    printf("%04X(%5d):\t", i, i);
-	    for (j = 0; j < w && i < n; j ++) {
-		printf("%02X ", *p ++);
-		i ++;
-	    }
-	    printf("\n");
-	}
-	puts("");
-}
