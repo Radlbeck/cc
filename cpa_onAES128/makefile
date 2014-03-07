@@ -4,10 +4,10 @@
 CC = gcc
 
 # Complier flag to be set
-CFLAGS = -O3
+CFLAGS = -O3 -lm
 
 # Target program to build
-TARGET = dpa
+TARGET = cpa
 T_TYPE = c
 
 # Output location

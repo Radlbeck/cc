@@ -10,6 +10,7 @@
 #define		MIN_KEYBITS	0
 #define		MAX_KEYBITS	8
 #define		NUM_KEYBITS	8
+#define		NUM_POPBITS	9
 #define		NUM_KEYS	256
 
 #define		FILE_CIPHER	"cipher.txt"
@@ -20,8 +21,7 @@ double	pts[NUM_PTS][PT_LENGTH];
 unsigned char cipher[NUM_PTS][NUM_BYTES_BLOCK];
 
 /* varables for cpa */
-double	pts0[NUM_KEYS][NUM_KEYBITS][PT_LENGTH];
-double  pts1[NUM_KEYS][NUM_KEYBITS][PT_LENGTH];
+double	pts_set[NUM_POPBITS][PT_LENGTH];
 
 int	num_pts0[NUM_KEYS][NUM_KEYBITS];
 int	num_pts1[NUM_KEYS][NUM_KEYBITS];
@@ -223,6 +223,39 @@ void	PT_mac_scale (double *sum, double * p1, double p2, int n)
     }
 }
 
+void	PT_mul (double *sum, double * p1, double * p2, int n)
+{
+    int	    i;
+    for (i = 0; i < n; i ++) {
+	sum[i] = p1[i] * p2[i];
+    }
+}
+
+void	PT_div (double *sum, double * p1, double * p2, int n)
+{
+    int	    i;
+    for (i = 0; i < n; i ++) {
+    p2[i] = 1.0 / p2[i];
+	sum[i] = p1[i] * p2[i];
+    }
+}
+
+void	PT_square (double *sum, double * p1, int n)
+{
+    int	    i;
+    for (i = 0; i < n; i ++) {
+	sum[i] = p1[i] * p1[i];
+    }
+}
+
+void	PT_square_root (double *sum, double * p1, int n)
+{
+    int	    i;
+    for (i = 0; i < n; i ++) {
+	sum[i] = sqrt(p1[i]);
+    }
+}
+
 void	PT_mac_sub (double *sum, double * p1, double * p2, int n)
 {
     int	    i;
@@ -314,53 +347,94 @@ int	get_difference(unsigned char * cipher, int n, int key)
 	return cipher[shift_row[n]] ^ temp; 	// compair bit change of cipher and state key
 }
 
+double get_correlation(int hamming_distance, double *sum_W2)
+{
+	double sum_WH[PT_LENGTH];
+	double sum_W[PT_LENGTH];
+	double sum_H;
+	double sum_H2;
+	int ham;
+
+	double right[PT_LENGTH];
+	double left[PT_LENGTH];
+	double temp;
+
+	double numerator[PT_LENGTH];
+	double denominator[PT_LENGTH];	
+	double corr[PT_LENGTH];	
+	double max;
+
+	//TODO consider init sum_x vars
+	// calculate summations
+	for(ham = 0; ham < NUM_POPBITS; ham++){
+		PT_mac_scale(sum_WH, pts_set[ham], (double)ham, PT_LENGTH);
+		PT_add(NULL, sum_W, pts_set[ham], PT_LENGTH);
+		sum_H += ham;
+		sum_H2 += (ham*ham);
+	}
+
+	// numerator
+	PT_scale(left, sum_WH, NUM_PTS, PT_LENGTH);		// left of the -
+	PT_scale(right, sum_WH, sum_H, PT_LENGTH);		// right of the -
+	PT_sub(numerator, left, right, PT_LENGTH);		//TODO abs?????
+
+	// left side of the denominator
+	PT_scale(left, sum_W2, NUM_PTS, PT_LENGTH);		// N * sum_W2
+	PT_square(right, sum_W, PT_LENGTH);				// sum_W ^ 2
+	PT_sub(left, left, right, PT_LENGTH);
+	PT_square_root(denominator, left, PT_LENGTH);
+
+	// right side of the denominator
+	temp = sqrt((NUM_PTS * sum_H2) - (sum_H * sum_H));
+
+	// denominator
+	PT_scale(denominator, denominator, temp, PT_LENGTH);
+
+	// final division and max!!!
+	PT_div(corr, numerator, denominator, PT_LENGTH);
+	max = max_dp(corr, PT_LENGTH, NULL);
+
+	return max;
+}
+
 // return the key byte at location bytenum
 int	cpa_aes(int bytenum)
 {
-	int	i_pt, i, nbits;
+	int	i_pt, i, nbits, j;
 	int	kv;
 
 	// Initialization
-	for (i = 0; i < NUM_KEYS; i ++) {
-	    for (nbits = MIN_KEYBITS; nbits < MAX_KEYBITS; nbits ++) {
-		PT_zero(pts0[i][nbits], PT_LENGTH);
-		PT_zero(pts1[i][nbits], PT_LENGTH);
-		num_pts0[i][nbits] = num_pts1[i][nbits] = 0;
-	    }
+	for (i = 0; i < NUM_KEYS; i ++) {		
 	    PT_zero(pt_delta[i], PT_LENGTH);
 	}
+	for(j = 0; j < NUM_POPBITS; j++){
+	    PT_zero(pts_set[j], PT_LENGTH);
+	}
+        PT_zero(pt_corr, NUM_KEYS);
 
 	// Put your code here
-	int count_S0, count_S1, j;
-	
 	// rotate through key guess NUM_KEYS
 	for(i = 0; i < NUM_KEYS; i++){
-		for (nbits = MIN_KEYBITS; nbits < MAX_KEYBITS; nbits++) {
-			// reset counters
-			count_S0 = count_S1 = 0;
+		// look at bit bytenum refering to 10th round key byte (0 -> 15)
+		// rotate through power traces
 
-			// look at bit bytenum refering to 10th round key byte (0 -> 15)
-			// rotate through power traces
-			for(j = 0; j < NUM_PTS; j++){
-				// cyper_i reg -> XOR key guess -> shift rows -> inv SBox -> get state_i reg
-				// compair state_i reg and cyper_i reg bits if a change exists P_i -> S1 otherwise S0
-				int diff = get_difference(cipher[j], bytenum, i);			
-				int mask = (1 << nbits);
-	
-				if(diff & mask){
-					count_S1++;
-	 				PT_add(NULL, &pts1[i][nbits][0], &pts[j][0], PT_LENGTH);
-				}else{
-					count_S0++;
-	 				PT_add(NULL, &pts0[i][nbits][0], &pts[j][0], PT_LENGTH); 				
-				}			
-			}
-
-			//TODO plug in correlation fourmula
+		// summations for correlation
+		double sum_W2[PT_LENGTH];
+		for(j = 0; j < NUM_PTS; j++){
+			// cyper_i reg -> XOR key guess -> shift rows -> inv SBox -> get state_i reg
+			// compair state_i reg and cyper_i reg bits if a change exists P_i -> S1 otherwise S0
+			unsigned int diff_pop = __builtin_popcount(get_difference(cipher[j], bytenum, i));
 			
+			if(diff_pop > 8) perror("ERROR: too many poped bits\n");
+			PT_add(NULL, pts_set[diff_pop], pts[j], PT_LENGTH);
 
+			//calculate some summations for correlation
+			PT_mac(sum_W2, pts[j], pts[j], PT_LENGTH);
 		}
+		//TODO plug in correlation fourmula		
+		pt_corr[i] = get_correlation(NUM_POPBITS, sum_W2); //TODO figure out how to pass pts_set
 	}
+	
 	// get the max of all stored correlations and return accosiated i(key value)
 	max_dp(&pt_corr[0], NUM_KEYS, &kv);
 
