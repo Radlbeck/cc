@@ -1,0 +1,28 @@
+# makefile help http://www.cs.swarthmore.edu/~newhall/unixhelp/howto_makefiles.html
+
+# Compiler for C program
+CC = gcc
+
+# Complier flag to be set
+CFLAGS = -O3
+
+# Target program to build
+TARGET = dpa
+T_TYPE = c
+
+# Output location
+MKDIR_P    = mkdir -p
+OUTPUT_DIR = ./out
+OUTPUT     = $(OUTPUT_DIR)/$(TARGET)
+
+all: out_dir $(TARGET) 
+
+out_dir:
+	$(MKDIR_P) $(OUTPUT_DIR)
+
+$(TARGET): $(TARGET).$(T_TYPE)
+	$(CC) $(CFLAGS) -o $(OUTPUT) $(TARGET).$(T_TYPE)
+
+clean:
+	$(RM) $(TARGET)
+
