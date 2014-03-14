@@ -3,7 +3,7 @@
 #include	<math.h>
 #include	<time.h>
 
-#define		PT_LENGTH	100
+#define		PT_LENGTH	200
 #define		NUM_PTS		20000
 #define		NUM_BYTES_BLOCK	16
 
@@ -347,36 +347,45 @@ int	get_difference(unsigned char * cipher, int n, int key)
 	return cipher[shift_row[n]] ^ temp; 	// compair bit change of cipher and state key
 }
 
-double get_correlation(int hamming_distance, double *sum_W2)
+double get_correlation(int hamming_distance, double *sum_W2, double sum_H, double sum_H2)
 {
 	double sum_WH[PT_LENGTH];
 	double sum_W[PT_LENGTH];
-	double sum_H;
-	double sum_H2;
-	int ham;
+	int    ham    = 0;
 
 	double right[PT_LENGTH];
 	double left[PT_LENGTH];
-	double temp;
+	double temp = 0;
 
 	double numerator[PT_LENGTH];
 	double denominator[PT_LENGTH];	
 	double corr[PT_LENGTH];	
-	double max;
+	double max = 0;
+
+	// initilization	
+	PT_zero(sum_WH, PT_LENGTH);
+	PT_zero(sum_W, PT_LENGTH);
+	PT_zero(right, PT_LENGTH);
+	PT_zero(left, PT_LENGTH);
+	PT_zero(numerator, PT_LENGTH);
+	PT_zero(denominator, PT_LENGTH);
+	PT_zero(corr, PT_LENGTH);
 
 	//TODO consider init sum_x vars
 	// calculate summations
 	for(ham = 0; ham < NUM_POPBITS; ham++){
 		PT_mac_scale(sum_WH, pts_set[ham], (double)ham, PT_LENGTH);
 		PT_add(NULL, sum_W, pts_set[ham], PT_LENGTH);
-		sum_H += ham;
-		sum_H2 += (ham*ham);
 	}
+
+	//printf("S0: %f, S1: %f \n", sum_WH[0], sum_W[0]); //TODO REMOVE
 
 	// numerator
 	PT_scale(left, sum_WH, NUM_PTS, PT_LENGTH);		// left of the -
 	PT_scale(right, sum_WH, sum_H, PT_LENGTH);		// right of the -
-	PT_sub(numerator, left, right, PT_LENGTH);		//TODO abs?????
+	PT_sub(numerator, left, right, PT_LENGTH);		
+
+	//printf("S0: %f, S1: %f \n", left[0], numerator[0]);  //TODO REMOVE
 
 	// left side of the denominator
 	PT_scale(left, sum_W2, NUM_PTS, PT_LENGTH);		// N * sum_W2
@@ -384,14 +393,19 @@ double get_correlation(int hamming_distance, double *sum_W2)
 	PT_sub(left, left, right, PT_LENGTH);
 	PT_square_root(denominator, left, PT_LENGTH);
 
+	//printf("S0: %f, S1: %f \n", left[0], denominator[0]);  //TODO REMOVE
+
 	// right side of the denominator
 	temp = sqrt((NUM_PTS * sum_H2) - (sum_H * sum_H));
+	//printf("S0: %f\n", temp);  //TODO REMOVE
 
 	// denominator
 	PT_scale(denominator, denominator, temp, PT_LENGTH);
+	//printf("S0: %f\n", denominator[0]);  //TODO REMOVE
 
 	// final division and max!!!
 	PT_div(corr, numerator, denominator, PT_LENGTH);
+	//printf("S0: %f\n", corr[0]);  //TODO REMOVE
 	max = max_dp(corr, PT_LENGTH, NULL);
 
 	return max;
@@ -404,38 +418,46 @@ int	cpa_aes(int bytenum)
 	int	kv;
 
 	// Initialization
-	for (i = 0; i < NUM_KEYS; i ++) {		
-	    PT_zero(pt_delta[i], PT_LENGTH);
-	}
-	for(j = 0; j < NUM_POPBITS; j++){
-	    PT_zero(pts_set[j], PT_LENGTH);
-	}
-        PT_zero(pt_corr, NUM_KEYS);
+    PT_zero(pt_corr, NUM_KEYS);
 
 	// Put your code here
 	// rotate through key guess NUM_KEYS
 	for(i = 0; i < NUM_KEYS; i++){
+		// Initialization
+		for(j = 0; j < NUM_POPBITS; j++){
+		    PT_zero(pts_set[j], PT_LENGTH);
+		}
 		// look at bit bytenum refering to 10th round key byte (0 -> 15)
 		// rotate through power traces
 
 		// summations for correlation
 		double sum_W2[PT_LENGTH];
+		double sum_H  = 0;
+		double sum_H2 = 0;
+		PT_zero(sum_W2, PT_LENGTH);
+
 		for(j = 0; j < NUM_PTS; j++){
 			// cyper_i reg -> XOR key guess -> shift rows -> inv SBox -> get state_i reg
 			// compair state_i reg and cyper_i reg bits if a change exists P_i -> S1 otherwise S0
-			unsigned int diff_pop = __builtin_popcount(get_difference(cipher[j], bytenum, i));
-			
-			if(diff_pop > 8) perror("ERROR: too many poped bits\n");
+			unsigned int diff_pop = __builtin_popcount(get_difference(cipher[j], bytenum, i));			
+			if(diff_pop > 8) perror("ERROR: too many popped bits\n");
+
 			PT_add(NULL, pts_set[diff_pop], pts[j], PT_LENGTH);
+			sum_H += (double)diff_pop;
+			sum_H2 += ((double)diff_pop*(double)diff_pop);
 
 			//calculate some summations for correlation
 			PT_mac(sum_W2, pts[j], pts[j], PT_LENGTH);
 		}
-		//TODO plug in correlation fourmula		
-		pt_corr[i] = get_correlation(NUM_POPBITS, sum_W2); //TODO figure out how to pass pts_set
+
+		//printf("S0: %f, S1: %f \n", pts_set[7][7], pts_set[8][4]);		//TODO REMOVE - nothing is in set 9, but thats probably ok		
+
+		// plug in correlation fourmula		
+		pt_corr[i] = get_correlation(NUM_POPBITS, sum_W2, sum_H, sum_H2); //TODO figure out how to pass pts_set
 	}
 	
 	// get the max of all stored correlations and return accosiated i(key value)
+	PT_abs(pt_corr, NUM_KEYS);    //TODO    ya???
 	max_dp(&pt_corr[0], NUM_KEYS, &kv);
 
 	return kv;
