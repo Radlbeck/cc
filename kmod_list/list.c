@@ -2,27 +2,41 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/list.h>
 
 struct birthday {
 	int day;
 	int month;
 	int year;
 	struct list_head list;		// this allows each node to know about the list it's in
-}
+};
 
-list_head birthday_list;
-static LIST_HEAD(birthday_list);
+static LIST_HEAD(birthday_list);	// macro to create and init the list birthday_list
+struct birthday *ptr;
+int i = 0;
 
 int simple_init(void)
 {
 	printk(KERN_INFO "Loading List Module\n");
 	
-	struct birthday *person;
-	person = kmalloc(sizeof(*person), GF_KERNEL);
-	person->day   = 2;
-	person->month = 2;
-	person->year  = 1992;
-	INIT_LIST_HEAD(&person->list);
+	for(i = 0; i < 5; i++){
+		struct birthday *person;
+		person = kmalloc(sizeof(*person), GFP_KERNEL);
+		person->day   = i;
+		person->month = i;
+		person->year  = 1990 + i;
+		if(i == 0){
+			INIT_LIST_HEAD(&person->list);
+		}else{
+			list_add_tail(&person->list, &birthday_list);
+		}
+		printk(KERN_INFO "creating: %i \n", i);
+	}
+	
+	list_for_each_entry(ptr, &birthday_list, list) {
+	/*on each iteration ptr points to the next birthday struct */
+		printk(KERN_INFO "iterating: %i \n", ptr->day);
+	}
 
 	return 0;
 }
