@@ -35,7 +35,7 @@ int simple_init(void)
 	
 	list_for_each_entry(ptr, &birthday_list, list) {
 	/*on each iteration ptr points to the next birthday struct */
-		printk(KERN_INFO "iterating: %i \n", ptr->day);
+		printk(KERN_INFO "iterating: %i \n", ptr->day);				//TODO make sure to grab all nodes [find var for current]
 	}
 
 	return 0;
@@ -44,6 +44,8 @@ int simple_init(void)
 void simple_exit(void)
 {
 	printk(KERN_INFO "Removing List Module\n");
+
+	//TODO print contents and deallocate memory
 }
 
 module_init(simple_init);
