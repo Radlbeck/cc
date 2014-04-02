@@ -1,8 +1,7 @@
 #include <linux/init.h>
-#include <linux/module.h>		//TODO remove includes that you do not use
+#include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
-#include <linux/list.h>
 #include <linux/sched.h>
 
 struct task_struct *task;
