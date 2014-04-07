@@ -1,5 +1,5 @@
 #include <linux/init.h>
-#include <linux/module.h>
+#include <linux/module.h>		//TODO remove includes that you do not use
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/sched.h>
@@ -10,9 +10,9 @@ int simple_init(void)
 {
 	printk(KERN_INFO "Loading Task List Module\n\n");
 	
-	printk(KERN_INFO "TASK\t\t\tPID\n");
+	printk(KERN_INFO "STATE\t\tPID\t\tNAME\n");
 	for_each_process(task) {							// iterates through each task
-		printk("%s \t\t %d\n",task->comm, task->pid);	// output some task properties
+		printk("%ld \t\t %d \t\t %s\n",task->state, task->pid, task->comm);	// output some task properties
 	} 
 
 	return 0;
