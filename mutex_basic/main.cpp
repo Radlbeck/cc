@@ -11,7 +11,7 @@ sem_t mutex;
 void *ThreadOne(void *argument)
 {
 	sem_wait(&mutex);
-	for(int i = 1; i <= 10; i++) sum += i;
+	for(int i = 1; i <= 10; i++) printf("Thread One: %d\n",sum += i);
 	sem_post(&mutex);
 	return NULL;
 }
@@ -19,7 +19,7 @@ void *ThreadOne(void *argument)
 void *ThreadTwo(void *argument)
 {
 	sem_wait(&mutex);
-	for(int i = 11; i <= 20; i++) sum += i;
+	for(int i = 11; i <= 20; i++) printf("Thread Two: %d\n", sum += i);
 	sem_post(&mutex);
 	return NULL;
 }
@@ -36,19 +36,18 @@ int main(void)
 {
 	sem_init(&mutex, 0, 1);
 	pthread_t thr1, thr2, thr3;
-	int rc;	 
 
 	// create the threads
-	rc = pthread_create(&thr1, NULL, ThreadOne, (void *) NULL);
-	rc = pthread_create(&thr2, NULL, ThreadTwo, (void *) NULL);
-	rc = pthread_create(&thr3, NULL, ThreadThree, (void *) NULL);
+	pthread_create(&thr1, NULL, ThreadOne, (void *) NULL);
+	pthread_create(&thr2, NULL, ThreadTwo, (void *) NULL);
+	pthread_create(&thr3, NULL, ThreadThree, (void *) NULL);
 
 	// wait for them to return
-	rc = pthread_join(thr1, NULL);
-	rc = pthread_join(thr2, NULL);
-	rc = pthread_join(thr3, NULL);
+	pthread_join(thr1, NULL);
+	pthread_join(thr2, NULL);
+	pthread_join(thr3, NULL);
 
-	printf("The total is: %d\n", sum);
+	printf("\nThe total is: %d\n", sum);
  	
 	// clean up
 	sem_destroy(&mutex);
