@@ -65,8 +65,9 @@ void *requestThread(void *argument)
 void *serviceThread(void *argument)
 {
 	int requester_amount = *(int*) argument;
-	int current_job = 0;
 	bool is_completed = false;
+	queue<int> active_jobs_lvl2;
+	queue<int> active_jobs_lvl3;
 
 	// TEST
 	sem_wait(&mutex_cout);
@@ -75,42 +76,74 @@ void *serviceThread(void *argument)
 	// end TEST
 
 	sem_wait(&mutex_threads);
-
-	// TEST
-	sem_wait(&mutex_cout);
-	cout << "comp: " << threads_complete << "req: " << requester_amount << endl;
-	sem_post(&mutex_cout);
-	// end TEST
-
 	is_completed = (threads_complete < requester_amount)? false : true;
 	sem_post(&mutex_threads);
 
-
 	while(!is_completed){
+		/* level one -> Q = 10 */
 		sem_wait(&mutex_cpu);			// grab a new job if needed
 		if(!cpu_active_jobs.empty()){
-			current_job = cpu_active_jobs.front();
+			int current_job = cpu_active_jobs.front();
 
-			// TEST
+			current_job -= 10;			// decrement by Q
+			if(current_job > 0){		// send to next level
+				active_jobs_lvl2.push(current_job); 				
+			}else{						// else keep positive for output
+				current_job = 0;
+			}
+			// output
 			sem_wait(&mutex_cout);
-			cout << "Job received ln: " << current_job << endl;
+			cout << "Job received level 1: " << cpu_active_jobs.front() << " remaining: "<< current_job << endl;
 			sem_post(&mutex_cout);
-
+			// output
 			cpu_active_jobs.pop();
-			// end TEST
-
-			// /* level one */
-			// current_job -= 10;
-			// /* level two */
-			// if(current_job > 0) current_job -= 20;
-			// /* level three */
-			// if(current_job > 0) current_job -= 40;
 		}
 		sem_post(&mutex_cpu);
 
-		sem_wait(&mutex_cpu);				// give other threads a chance to grab mutex
+		/* level two -> Q = 20 */
+		if(!active_jobs_lvl2.empty()){
+			int current_job = active_jobs_lvl2.front();
+
+			current_job -= 20;			// decrement by Q
+			if(current_job > 0){		// send to next level
+				active_jobs_lvl3.push(current_job); 				
+			}else{						// else keep positive for output
+				current_job = 0;
+			}
+			// output
+			sem_wait(&mutex_cout);
+			cout << "Job received level 2: " << active_jobs_lvl2.front() << " remaining: "<< current_job << endl;
+			sem_post(&mutex_cout);
+			// output
+			active_jobs_lvl2.pop();
+		}
+
+		/* level three -> Q = 40 */
+		if(!active_jobs_lvl3.empty()){
+			int current_job = active_jobs_lvl3.front();
+
+			current_job -= 40;			// decrement by Q
+			if(current_job > 0){		// send to next level
+				active_jobs_lvl3.push(current_job); 				
+			}else{						// else keep positive for output
+				current_job = 0;
+			}
+			// output
+			sem_wait(&mutex_cout);
+			cout << "Job received level 3: " << active_jobs_lvl3.front() << " remaining: "<< current_job << endl;
+			sem_post(&mutex_cout);
+			// output
+			active_jobs_lvl3.pop();
+		}
+
+		sem_wait(&mutex_cpu);				// give other threads a chance to grab the mutex
 		sem_wait(&mutex_threads);			// servicer is done when there are no requesters and no active jobs
-		is_completed = (threads_complete >= requester_amount && cpu_active_jobs.empty())? true : false;
+		is_completed = 
+			(threads_complete >= requester_amount && 
+				cpu_active_jobs.empty() && 
+				active_jobs_lvl2.empty() && 
+				active_jobs_lvl3.empty())? 
+			true : false;
 		sem_post(&mutex_threads);
 		sem_post(&mutex_cpu);
 	}
