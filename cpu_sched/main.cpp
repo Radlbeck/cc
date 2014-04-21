@@ -11,6 +11,10 @@ using namespace std;
 
 #define MAX_REQUESTS 10
 
+struct arg_struct {
+    queue<int> list;
+    int name;
+};
 sem_t mutex_cout, mutex_cpu, mutex_threads;
 queue<int> cpu_active_jobs;
 int threads_complete = 0;
@@ -31,25 +35,20 @@ queue<int> parse_arguments(char *infile, queue<int> job_list)
 
 void *requestThread(void *argument)
 {
-	queue<int> *job_list = (queue<int>*)argument;
-
-	// TEST
-	sem_wait(&mutex_cout);
-	cout << "request thread created: " << job_list->front() << endl;
-	sem_post(&mutex_cout);
-	// end TEST
+	arg_struct *args = (arg_struct*)argument;
+	queue<int> *job_list = &args->list;
+	int name = args->name;
 
 	while(!job_list->empty()){							// while jobs exist load into active job list
 		sem_wait(&mutex_cpu);
 		if(cpu_active_jobs.size() < max_cpu_queue){		// abide by max CPU queue size			
 			cpu_active_jobs.push(job_list->front());
 
-
-			// TEST
-			sem_wait(&mutex_cout);
-			cout << "request we pushed and popped: " << job_list->front() << endl;
+			// output
+			sem_wait(&mutex_cout); //requester 0 job-length 10
+			cout << "requester " << name << " job-length " << job_list->front() << endl;
 			sem_post(&mutex_cout);
-			// end TEST
+			// output
 
 			job_list->pop();
 		}
@@ -69,12 +68,6 @@ void *serviceThread(void *argument)
 	queue<int> active_jobs_lvl2;
 	queue<int> active_jobs_lvl3;
 
-	// TEST
-	sem_wait(&mutex_cout);
-	cout << "servicing thread created" << endl;
-	sem_post(&mutex_cout);
-	// end TEST
-
 	sem_wait(&mutex_threads);
 	is_completed = (threads_complete < requester_amount)? false : true;
 	sem_post(&mutex_threads);
@@ -87,15 +80,25 @@ void *serviceThread(void *argument)
 
 			current_job -= 10;			// decrement by Q
 			if(current_job > 0){		// send to next level
-				active_jobs_lvl2.push(current_job); 				
+				active_jobs_lvl2.push(current_job);
+
+				// output
+				sem_wait(&mutex_cout); // service requester 0 job-length 10 level 1 left 0
+				cout << "service requester " << "FILLIN" << " job-length " << 
+					cpu_active_jobs.front()<< " level 1 left "<< current_job << " move to level 2" << endl;
+				sem_post(&mutex_cout);
+				// output		
 			}else{						// else keep positive for output
 				current_job = 0;
+
+				// output
+				sem_wait(&mutex_cout); // service requester 0 job-length 10 level 1 left 0
+				cout << "service requester " << "FILLIN" << " job-length " << 
+					cpu_active_jobs.front()<< " level 1 left " << current_job << endl;
+				sem_post(&mutex_cout);
+				// output
+
 			}
-			// output
-			sem_wait(&mutex_cout);
-			cout << "Job received level 1: " << cpu_active_jobs.front() << " remaining: "<< current_job << endl;
-			sem_post(&mutex_cout);
-			// output
 			cpu_active_jobs.pop();
 		}
 		sem_post(&mutex_cpu);
@@ -107,14 +110,25 @@ void *serviceThread(void *argument)
 			current_job -= 20;			// decrement by Q
 			if(current_job > 0){		// send to next level
 				active_jobs_lvl3.push(current_job); 				
+
+				// output
+				sem_wait(&mutex_cout);	// service requester 1 job-length 100 level 1 left 90 move to level 2
+				cout << "service requester " << "FILLIN" << " job-length " << 
+					active_jobs_lvl2.front() << " level 2 left "<< current_job << " move to level 3" << endl;
+				sem_post(&mutex_cout);
+				// output
+
 			}else{						// else keep positive for output
 				current_job = 0;
+
+				// output
+				sem_wait(&mutex_cout);	// service requester 1 job-length 100 level 1 left 90 move to level 2
+				cout << "service requester " << "FILLIN" << " job-length " <<
+					active_jobs_lvl2.front() << " level 2 left "<< current_job << endl;
+				sem_post(&mutex_cout);
+				// output
 			}
-			// output
-			sem_wait(&mutex_cout);
-			cout << "Job received level 2: " << active_jobs_lvl2.front() << " remaining: "<< current_job << endl;
-			sem_post(&mutex_cout);
-			// output
+
 			active_jobs_lvl2.pop();
 		}
 
@@ -124,15 +138,25 @@ void *serviceThread(void *argument)
 
 			current_job -= 40;			// decrement by Q
 			if(current_job > 0){		// send to next level
-				active_jobs_lvl3.push(current_job); 				
+				active_jobs_lvl3.push(current_job); 		
+
+				// output
+				sem_wait(&mutex_cout);
+				cout << "service requester " << "FILLIN" << " job-length " << 
+					active_jobs_lvl3.front() << " level 3 left "<< current_job << " stay in level 3" << endl;
+				sem_post(&mutex_cout);
+				// output		
 			}else{						// else keep positive for output
 				current_job = 0;
+
+				// output
+				sem_wait(&mutex_cout);
+				cout << "service requester " << "FILLIN" << " job-length " << 
+					active_jobs_lvl3.front() << " level 3 left "<< current_job << endl;
+				sem_post(&mutex_cout);
+				// output
 			}
-			// output
-			sem_wait(&mutex_cout);
-			cout << "Job received level 3: " << active_jobs_lvl3.front() << " remaining: "<< current_job << endl;
-			sem_post(&mutex_cout);
-			// output
+
 			active_jobs_lvl3.pop();
 		}
 
@@ -156,7 +180,7 @@ int main(int argc, char * argv[])
 	sem_init(&mutex_cout, 0, 1);
 	sem_init(&mutex_cpu, 0, 1);
 	sem_init(&mutex_threads, 0, 1);
-	queue<int> job_list[MAX_REQUESTS];
+	arg_struct thr_arguments[MAX_REQUESTS];
 	pthread_t  requester[MAX_REQUESTS], server;
 	int request_thread_count = 0;
 
@@ -164,13 +188,14 @@ int main(int argc, char * argv[])
 	if(argc < 2) {cout << "Not enough arguments" << endl; exit(EXIT_FAILURE);}			// send error if incorrect input
 	max_cpu_queue = atoi(argv[1]);														// set max CPU queue amount
  	for(int i = 2; i < argc; i++){				// loop through requester thread files and return job lengths in a queue
- 		job_list[request_thread_count] = parse_arguments(argv[i], job_list[request_thread_count]);
- 		request_thread_count++;
- 	}
+ 		thr_arguments[request_thread_count].list = parse_arguments(argv[i], thr_arguments[request_thread_count].list);
+ 		thr_arguments[request_thread_count].name = request_thread_count;
+ 		request_thread_count++
+; 	}
 
  	/* create requester and servicing threads */
  	for(int i = 0; i < request_thread_count; i++){
- 		pthread_create(&requester[i], NULL, requestThread, (void *) &job_list[i]);
+ 		pthread_create(&requester[i], NULL, requestThread, (void *) &thr_arguments[i]);
  	}
  	pthread_create(&server, NULL, serviceThread, (void *) &request_thread_count);
 
