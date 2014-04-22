@@ -9,9 +9,9 @@
 #include <queue>
 using namespace std;
 
-#define MAX_REQUESTS 10
+#define MAX_REQUESTS 20
 
-struct job {
+struct job {			// a structure for jobs so they know which requester they came from
 	int parent;
     int amount;
 };
@@ -23,13 +23,13 @@ unsigned int max_cpu_queue = 0;
 queue<job> parse_arguments(char *infile, queue<job> job_list, int name)
 {
 	ifstream file (infile);								// open file into an input file stream
-	job temp;
+	job temp;											// new job to input data
 	if(file.is_open()){
 		string word;
 		while(file >> word){							// iterate through all the strings in the file
-			temp.parent = name;
+			temp.parent = name;							// save the name and job amount
 			temp.amount = atoi(word.c_str());
-			job_list.push(temp);			// push them into a queue
+			job_list.push(temp);						// push them into a queue
 		}
 	}
 
@@ -38,12 +38,12 @@ queue<job> parse_arguments(char *infile, queue<job> job_list, int name)
 
 void *requestThread(void *argument)
 {
-	queue<job> *job_list = (queue<job>*)argument;
+	queue<job> *job_list = (queue<job>*)argument;		// re-cast the job queue
 
 	while(!job_list->empty()){							// while jobs exist load into active job list
 		sem_wait(&mutex_cpu);
-		if(cpu_active_jobs.size() < max_cpu_queue){		// abide by max CPU queue size			
-			cpu_active_jobs.push(job_list->front());
+		if(cpu_active_jobs.size() < max_cpu_queue){		// abide by max CPU queue size	(mutex)	
+			cpu_active_jobs.push(job_list->front());	// add the new job to the global queue
 
 
 			// output
@@ -52,12 +52,12 @@ void *requestThread(void *argument)
 			sem_post(&mutex_cout);
 			// output
 
-			job_list->pop();
+			job_list->pop();							// remove the job from the list
 		}
 		sem_post(&mutex_cpu);
 	}
 	sem_wait(&mutex_threads);
-	threads_complete++;
+	threads_complete++;									// keep track of the finished threads
 	sem_post(&mutex_threads);
 	
 	return NULL;
@@ -65,20 +65,20 @@ void *requestThread(void *argument)
 
 void *serviceThread(void *argument)
 {
-	int requester_amount = *(int*) argument;
+	int requester_amount = *(int*) argument;			// re-cast the requester amount
 	bool is_completed = false;
 	queue<job> active_jobs_lvl2;
 	queue<job> active_jobs_lvl3;
 
-	sem_wait(&mutex_threads);
+	sem_wait(&mutex_threads);							// check to see if any requesters are present
 	is_completed = (threads_complete < requester_amount)? false : true;
 	sem_post(&mutex_threads);
 
 	while(!is_completed){
 		/* level one -> Q = 10 */
-		sem_wait(&mutex_cpu);			// grab a new job if needed
+		sem_wait(&mutex_cpu);							// grab a new job if needed
 		if(!cpu_active_jobs.empty()){
-			job new_job = cpu_active_jobs.front();
+			job new_job = cpu_active_jobs.front();		// split the job up into workable integers
 			int current_job = new_job.amount;
 			int old_amount = current_job;
 			int parent = new_job.parent;
@@ -86,10 +86,10 @@ void *serviceThread(void *argument)
 			current_job -= 10;			// decrement by Q
 			if(current_job > 0){		// send to next level
 				new_job.amount = current_job;
-				active_jobs_lvl2.push(new_job);
+				active_jobs_lvl2.push(new_job);		    // push job into its new queue
 
 				// output
-				sem_wait(&mutex_cout); // service requester 0 job-length 10 level 1 left 0
+				sem_wait(&mutex_cout);  // service requester 0 job-length 10 level 1 left 0 move to level 2
 				cout << "service requester " << parent << " job-length " << 
 					old_amount << " level 1 left "<< current_job << " move to level 2" << endl;
 				sem_post(&mutex_cout);
@@ -105,13 +105,13 @@ void *serviceThread(void *argument)
 				// output
 			}
 
-			cpu_active_jobs.pop();
+			cpu_active_jobs.pop();	  // remove job from current queue
 		}
 		sem_post(&mutex_cpu);
 
 		/* level two -> Q = 20 */
 		if(!active_jobs_lvl2.empty()){
-			job new_job = active_jobs_lvl2.front();
+			job new_job = active_jobs_lvl2.front();		// split the job up into workable integers
 			int current_job = new_job.amount;
 			int old_amount = current_job;
 			int parent = new_job.parent;
@@ -143,7 +143,7 @@ void *serviceThread(void *argument)
 
 		/* level three -> Q = 40 */
 		if(!active_jobs_lvl3.empty()){
-			job new_job = active_jobs_lvl3.front();
+			job new_job = active_jobs_lvl3.front();		// split the job up into workable integers
 			int current_job = new_job.amount;
 			int old_amount = current_job;
 			int parent = new_job.parent;
@@ -177,7 +177,7 @@ void *serviceThread(void *argument)
 		sem_wait(&mutex_threads);			// servicer is done when there are no requesters and no active jobs
 		is_completed = 
 			(threads_complete >= requester_amount && 
-				cpu_active_jobs.empty() && 
+				cpu_active_jobs.empty()  && 
 				active_jobs_lvl2.empty() && 
 				active_jobs_lvl3.empty())? 
 			true : false;
@@ -190,7 +190,7 @@ void *serviceThread(void *argument)
 
 int main(int argc, char * argv[])
 {	
-	sem_init(&mutex_cout, 0, 1);
+	sem_init(&mutex_cout, 0, 1);					// initialize all semaphores to 1
 	sem_init(&mutex_cpu, 0, 1);
 	sem_init(&mutex_threads, 0, 1);
 	queue<job> job_list[MAX_REQUESTS];
